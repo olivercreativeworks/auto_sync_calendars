@@ -1,6 +1,3 @@
-const calendarManager = getCalendarIdManager()
-const scriptUrlManager = getScriptUrlManager()
-
 /** Update the config object below. The following tips might be helpful:
  * - Calendar ids (required): 
      - Source calendar: the calendar you want to copy events from. 
@@ -16,28 +13,7 @@ const scriptUrlManager = getScriptUrlManager()
         - NOTE: ScriptApp.getService().getUrl() does not return the correct /exec url when called from a time based trigger. So we need to enter the url ourselves.
 */
 const CONFIG = {
-  sourceCalendarId: calendarManager.getSourceCalendarId(),
-  targetCalendarId: calendarManager.getTargetCalendarId(),
-  scriptUrl:scriptUrlManager.getScriptUrl() 
-}
-
-function getScriptUrlManager(){
-  const urlSymbol = 'url'
-  const props = PropertiesService.getScriptProperties()
-  return {
-    getScriptUrl:() => props.getProperty(urlSymbol),
-    setScriptUrl:(url) => props.setProperty(urlSymbol, url)
-  }
-}
-
-function getCalendarIdManager(){
-  const sourceIdSymbol = 'sourceCalendarId'
-  const targetIdSymbol = 'targetCalendarId'
-  const props = PropertiesService.getScriptProperties()
-  return {
-    getSourceCalendarId: () => props.getProperty(sourceIdSymbol),
-    getTargetCalendarId: () => props.getProperty(targetIdSymbol),
-    setSourceCalendarId: (id) => props.setProperty(sourceIdSymbol, id), 
-    setTargetCalendarId: (id) => props.setProperty(targetIdSymbol, id)
-  }
+  sourceCalendarId: '',
+  targetCalendarId: '',
+  scriptUrl:'' 
 }
