@@ -1,4 +1,13 @@
 /**
+ * Syncs the calendars based on the settings in the Config.js file.
+ * 
+ * This function is global because it is used in the Auto Sync trigger function. It is also used in the doPost function.
+ */
+function syncCalendarsBasedOnConfig(){
+  syncCalendars(CONFIG.sourceCalendarId, CONFIG.targetCalendarId)
+}
+
+/**
  * Updates the calendar with the targetCalendarId with the events from the sourceCalendarId.
  * @param {string} targetCalendarId
  * @param {string} sourceCalendarId
