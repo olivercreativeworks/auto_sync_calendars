@@ -53,22 +53,24 @@ function getCalendarEvents(calendarId, pageToken, syncToken){
 }
 
 /**
- * @param {string} targetCalendarId
+ * @param {string} calendarId
  * @param {Calendar_v3.Calendar.V3.Schema.Event} sourceEvent
  */
-function syncTargetCalendarToSourceEvent(targetCalendarId, sourceEvent){
-  const targetEvent = getEvent(targetCalendarId, sourceEvent.id)
-  if(!targetEvent) {
-    return createEvent(sourceEvent, targetCalendarId)
+function syncCalendarWithSourceEvent(calendarId, sourceEvent){
+  // The event in the calendar should have the same id as the source event
+  const existingEvent = getEvent(calendarId, sourceEvent.id)
+  if(!existingEvent) {
+    return createEvent(sourceEvent, calendarId)
   }
-  else if(noUpdatesRequired(sourceEvent, targetEvent)){
+  else if(noUpdatesRequired(sourceEvent, existingEvent)){
     return
   }
   else if(isCancelled(sourceEvent)){
-    return removeEvent(targetEvent.id, targetCalendarId)
+    return removeEvent(existingEvent.id, calendarId)
   }
   else{
-    return updateEvent(targetEvent.id, targetCalendarId, {...sourceEvent, sequence:targetEvent.sequence})
+    // The sequence must match the existing event's sequence to avoid an error
+    return updateEvent(existingEvent.id, calendarId, {...sourceEvent, sequence:existingEvent.sequence})
   }    
 }
 
