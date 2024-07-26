@@ -29,16 +29,56 @@ function autoSyncManager(){
     return ScriptApp.getProjectTriggers().find(trigger => trigger.getUniqueId() == triggerId) !== undefined
   }
 
-  function saveTriggerId(triggerId){
-    props.setProperty(triggerSymbol, triggerId)
+  function createAutoSyncTrigger(){
+    removeAutoSyncTrigger()
+    const trigger = createTrigger()
+    saveTriggerId(trigger.getUniqueId())
   }
 
   function removeAutoSyncTrigger(){
-    disableAutoSync()
     const triggerId = getAutoSyncTriggerId()
     ScriptApp.getProjectTriggers()
       .filter(trigger => trigger.getUniqueId() === triggerId)
       .forEach(trigger => ScriptApp.deleteTrigger(trigger))
+    deleteTriggerId()
+  }
+
+  function getAutoSyncTriggerId(){
+    return props.getProperty(triggerSymbol)
+  }
+
+  function deleteTriggerId(){
+    props.deleteProperty(triggerSymbol)
+  }
+  
+  function createTrigger(){
+    return !!(CONFIG.scriptUrl) ? createWatcherTrigger() : createDirectTrigger()
+  }
+  
+  /**
+   * Sets up the auto sync using a watcher and script url.
+   */
+  function createWatcherTrigger(){
+    return ScriptApp.newTrigger(activateWatcher.name)
+      .timeBased()
+      .atHour(0)
+      .everyDays(6) // the watcher's default lifespan is 7 days. We will reset it on day 6 so there's no gaps.
+      .create()
+  }
+
+  /**
+   * Sets up the auto sync directly, without using a watcher or script url.
+   */
+  function createDirectTrigger(){
+    return ScriptApp.newTrigger(syncCalendarsBasedOnConfig.name)
+      .forUserCalendar(CONFIG.sourceCalendarId)
+      .onEventUpdated()
+      .create()
+  }
+  
+  /** @prop {string} triggerId */
+  function saveTriggerId(triggerId){
+    props.setProperty(triggerSymbol, triggerId)
   }
 
   /**
@@ -47,11 +87,6 @@ function autoSyncManager(){
   function disableAutoSync(){
     getCalendarWatcher().stopWatching()
   }
-
-  function getAutoSyncTriggerId(){
-    return props.getProperty(triggerSymbol)
-  }
-
 }
 
 /**
@@ -126,20 +161,13 @@ function getCalendarWatcher(){
     console.log(`Saving watcher:\n${watcher}`)
     props.setProperty(watcherSymbol, JSON.stringify(watcher))
   }
-
-  /**
-   * ScriptApp.getService().getUrl() does not return the correct /exec url when called from a time based trigger. So we need to store the url ourselves and retrieve it.
-   */
-  function getScriptUrl(){
-    return CONFIG.scriptUrl
-  }
 }
 
 /**
  * The url that the watcher sends the POST request to. doPost calls the function that actually performs the calendar sync based on the calendar ids set in the Config.gs file.
  */
 function doPost(e){
-  syncCalendars(CONFIG.sourceCalendarId, CONFIG.targetCalendarId)
+  syncCalendarsBasedOnConfig()
   return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
 }
 
