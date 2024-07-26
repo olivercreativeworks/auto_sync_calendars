@@ -16,7 +16,7 @@ function autoSyncManager(){
     const trigger = ScriptApp.newTrigger(enableAutoSync.name)
       .timeBased()
       .atHour(0)
-      .everyDays(6) // the watcher's lifespan is 7 days. We will reset it on day 6 so there's no gaps.
+      .everyDays(6) // the watcher's default lifespan is 7 days. We will reset it on day 6 so there's no gaps.
       .create()
     saveTriggerId(trigger.getUniqueId())
   }
@@ -47,7 +47,7 @@ function autoSyncManager(){
 }
 
 /**
- * Creates a watcher that alerts this script's endpoint whenever a change is made to the source calendar. Update the source calendar id in the Config.gs file.
+ * Creates a watcher that alerts this script's url whenever a change is made to the source calendar. Update the source calendar id in the Config.gs file.
  * 
  * This is used in a trigger function, so it's placed in the global scope.
  */
@@ -66,7 +66,7 @@ function getCalendarWatcher(){
   const props = PropertiesService.getScriptProperties()
   return {
     /** 
-     * Starts a watcher that will send a POST request to this script's endpoint when there are changes to the calendar with the specified calendarId.
+     * Starts a watcher that will send a POST request to this script's url when there are changes to the calendar with the specified calendarId.
      * @param {string} calendarId
      */
     beginWatching: (calendarId) => resetWatcher(calendarId),
@@ -100,7 +100,7 @@ function getCalendarWatcher(){
   /** @param {string} calendarId */
   function startWatchingCalendar(calendarId){
     const resource= {
-      address: ScriptApp.getService().getUrl(),
+      address: getScriptUrl(),
       id: Utilities.getUuid(),
       type: 'web_hook'
     }
@@ -113,10 +113,17 @@ function getCalendarWatcher(){
     console.log(`Saving watcher:\n${watcher}`)
     props.setProperty(watcherSymbol, JSON.stringify(watcher))
   }
+
+  /**
+   * ScriptApp.getService().getUrl() does not return the correct /exec url when called from a time based trigger. So we need to store the url ourselves and retrieve it.
+   */
+  function getScriptUrl(){
+    return CONFIG.scriptUrl
+  }
 }
 
 /**
- * The endpoint that the watcher Pings. It calls the function that actually performs the calendar sync based on the calendar ids set in the Config.gs file.
+ * The url that the watcher sends the POST request to. doPost calls the function that actually performs the calendar sync based on the calendar ids set in the Config.gs file.
  */
 function doPost(e){
   syncCalendars(CONFIG.sourceCalendarId, CONFIG.targetCalendarId)
