@@ -2,45 +2,54 @@ const sourceCalendarId=PropertiesService.getScriptProperties().getProperty('sour
 const targetCalendarId=PropertiesService.getScriptProperties().getProperty('targetCalendarId');
 
 function doPost(){
-  syncCalendars()
+  syncCalendars(sourceCalendarId, targetCalendarId)
   return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
 }
 
-function syncCalendars(){
-  usingSyncToken(
-    (sourceEvent) => syncTargetCalendarToSourceEvent(targetCalendarId, sourceEvent),
-    sourceCalendarId
-  )
-}
-
 /**
- * @param {(event: Calendar_v3.Calendar.V3.Schema.Event) => void} fn
+ * @param {string} targetCalendarId
  * @param {string} sourceCalendarId
  */
-function usingSyncToken(fn, sourceCalendarId){
-  let pageToken = undefined
-  let syncToken = getSyncToken()
+function syncCalendars(sourceCalendarId, targetCalendarId){
+  const tokenManager = getTokenManager()
   do{
-    const sourceEvents = Calendar.Events.list(sourceCalendarId, {syncToken, pageToken})
-    sourceEvents.items.forEach(sourceEvent => fn(sourceEvent))
-    pageToken = sourceEvents.nextPageToken
-    syncToken = sourceEvents.nextSyncToken || syncToken 
-  }while(pageToken !== undefined && pageToken !== null)
-  saveSyncToken(syncToken)
+    const sourceEvents = getCalendarEvents(
+      sourceCalendarId, 
+      tokenManager.getSavedPageToken(), 
+      tokenManager.getSavedSyncToken()
+    )
+
+    sourceEvents.items.forEach(
+      sourceEvent => syncCalendarWithSourceEvent(targetCalendarId, sourceEvent)
+    )
+
+    tokenManager.updateTokens(sourceEvents.nextPageToken, sourceEvents.nextSyncToken)
+  } while(tokenManager.hasPageToken())
+}
+
+function getTokenManager(){
+  const syncTokenSymbol = 'syncToken'
+  const pageTokenSymbol = 'pageToken'
+  const props = PropertiesService.getScriptProperties() 
+  return {
+    getSavedSyncToken: () => props.getProperty(syncTokenSymbol),
+    getSavedPageToken: () => props.getProperty(pageTokenSymbol),
+    hasPageToken: () => !!(props.getProperty(pageTokenSymbol)),
+    /** @param {string} [pageToken] @param {string} [syncToken] */
+    updateTokens: (pageToken, syncToken) => {
+      pageToken ? props.setProperty(pageTokenSymbol, pageToken) : props.deleteProperty(pageTokenSymbol)
+      syncToken && props.setProperty(syncTokenSymbol, syncToken)
+    }
+  }
 }
 
 /**
- * @return {string}
+ * @param {string} calendarId
+ * @param {string} [pageToken]
+ * @param {string} [syncToken]
  */
-function getSyncToken(){
-  return PropertiesService.getScriptProperties().getProperty('syncToken')
-}
-
-/**
- * @param {string} syncToken
- */
-function saveSyncToken(syncToken){
-  PropertiesService.getScriptProperties().setProperty('syncToken', syncToken)
+function getCalendarEvents(calendarId, pageToken, syncToken){
+  return Calendar.Events.list(calendarId, {syncToken, pageToken})
 }
 
 /**
