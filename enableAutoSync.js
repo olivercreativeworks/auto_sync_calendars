@@ -14,8 +14,13 @@ function autoSyncManager(){
       console.log('Auto sync is active.')
     },
     disable: () => {
+      if(!autoSyncIsActive()){
+        console.warn('Auto sync is already disabled')
+        return
+      }
       disableAutoSync()
       removeAutoSyncTrigger()
+      console.log('Auto sync is disabled.')
     },
   }
 
