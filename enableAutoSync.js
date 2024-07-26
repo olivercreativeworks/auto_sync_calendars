@@ -2,9 +2,16 @@ function autoSyncManager(){
   const triggerSymbol = 'trigger'
   const props = PropertiesService.getScriptProperties()
   return {
-    enable:() => {
-      enableAutoSync()
+    activate:() => {
+      if(autoSyncIsActive()){
+        console.warn('Auto sync is already active.')
+        return
+      }
+      if(CONFIG.scriptUrl){ 
+        activateWatcher() 
+      }
       createAutoSyncTrigger()
+      console.log('Auto sync is active.')
     },
     disable: () => {
       disableAutoSync()
@@ -12,13 +19,9 @@ function autoSyncManager(){
     },
   }
 
-  function createAutoSyncTrigger(){
-    const trigger = ScriptApp.newTrigger(enableAutoSync.name)
-      .timeBased()
-      .atHour(0)
-      .everyDays(6) // the watcher's default lifespan is 7 days. We will reset it on day 6 so there's no gaps.
-      .create()
-    saveTriggerId(trigger.getUniqueId())
+  function autoSyncIsActive(){
+    const triggerId = props.getProperty(triggerSymbol)
+    return ScriptApp.getProjectTriggers().find(trigger => trigger.getUniqueId() == triggerId) !== undefined
   }
 
   function saveTriggerId(triggerId){
@@ -51,8 +54,8 @@ function autoSyncManager(){
  * 
  * This is used in a trigger function, so it's placed in the global scope.
  */
-function enableAutoSync(){
-  getCalendarWatcher().beginWatching(CONFIG.sourceCalendarId)
+function activateWatcher(){
+  getCalendarWatcher().beginWatching(CONFIG.sourceCalendarId, CONFIG.scriptUrl)
 }
 
 
@@ -66,10 +69,11 @@ function getCalendarWatcher(){
   const props = PropertiesService.getScriptProperties()
   return {
     /** 
-     * Starts a watcher that will send a POST request to this script's url when there are changes to the calendar with the specified calendarId.
+     * Starts a watcher that will send a POST request the input url when there are changes to the calendar with the specified calendarId.
      * @param {string} calendarId
+     * @param {string} url The url where the POST request should be sent.
      */
-    beginWatching: (calendarId) => resetWatcher(calendarId),
+    beginWatching: (calendarId, url) => resetWatcher(calendarId, url),
     /**
      * Stops the active watcher.
      */
@@ -78,10 +82,11 @@ function getCalendarWatcher(){
 
   /** 
    * @param {string} calendarId 
+   * @param {string} url 
    */
-  function resetWatcher(calendarId){
+  function resetWatcher(calendarId, url){
     stopWatchingCalendar()
-    startWatchingCalendar(calendarId)
+    startWatchingCalendar(calendarId, url)
   }
 
   function stopWatchingCalendar(){
@@ -97,10 +102,13 @@ function getCalendarWatcher(){
     return JSON.parse(props.getProperty(watcherSymbol))
   }
 
-  /** @param {string} calendarId */
-  function startWatchingCalendar(calendarId){
+  /** 
+   * @param {string} calendarId 
+   * @param {string} url 
+   */
+  function startWatchingCalendar(calendarId, url){
     const resource= {
-      address: getScriptUrl(),
+      address: url,
       id: Utilities.getUuid(),
       type: 'web_hook'
     }

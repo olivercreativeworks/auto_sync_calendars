@@ -1,8 +1,8 @@
 /**
- * Run this to enable autosync. Update the config file to change the calendars you want to sync. 
+ * Run this to activate autosync. Update the config file to change the calendars you want to sync. 
  */
 function startAutoSync(){
-  autoSyncManager().enable()
+  autoSyncManager().activate()
 }
 
 /**
