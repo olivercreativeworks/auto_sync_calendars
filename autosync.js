@@ -206,11 +206,20 @@ function getScriptUrlManager(){
 }
 
 /**
- * The url that the watcher sends the POST request to. doPost calls the function that actually performs the calendar sync based on the calendar ids set in the Config.gs file.
+ * Syncs the calendars based on the ids in the CalendarIdManager. You can populate the CalendarIdManager by running the startAutoSync function in main.
+ * 
+ * This is used in a trigger function, so it's placed in the global scope.
  */
-function doPost(e){
-  syncCalendarsBasedOnConfig()
-  return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
+function performCalendarSync(){
+  const calendarIdManager = getCalendarIdManager()
+  syncCalendars(calendarIdManager.getSourceCalendarId(), calendarIdManager.getTargetCalendarId())
 }
 
+/**
+ * The url that the watcher sends the POST request to. Upon receiving the POST request, this calls the function that actually performs the calendar sync.
+ */
+function doPost(e){
+  performCalendarSync()
+  return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
+}
 
