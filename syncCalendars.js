@@ -12,23 +12,40 @@ function syncCalendarsBasedOnConfig(){
  * @param {string} targetCalendarId
  * @param {string} sourceCalendarId
  */
-function syncCalendars(sourceCalendarId, targetCalendarId){
+function syncCalendars(sourceCalendarId = CONFIG.sourceCalendarId, targetCalendarId = CONFIG.targetCalendarId){
   const tokenManager = getTokenManager()
   do{
-    const sourceEvents = getCalendarEvents(
-      sourceCalendarId, 
-      tokenManager.getSavedPageToken(), 
-      tokenManager.getSavedSyncToken()
-    )
+    try{
+      const sourceEvents = getCalendarEvents(
+        sourceCalendarId, 
+        tokenManager.getSavedPageToken(), 
+        tokenManager.getSavedSyncToken()
+      )
+      sourceEvents.items.forEach(
+        sourceEvent => syncCalendarWithSourceEvent(targetCalendarId, sourceEvent)
+      )
 
-    sourceEvents.items.forEach(
-      sourceEvent => syncCalendarWithSourceEvent(targetCalendarId, sourceEvent)
-    )
-
-    tokenManager.updateTokens(sourceEvents.nextPageToken, sourceEvents.nextSyncToken)
+      tokenManager.updateTokens(sourceEvents.nextPageToken, sourceEvents.nextSyncToken)
+    }catch(err){
+      console.warn(err)
+      console.warn(err.details)
+      if(syncTokenInvalidError(err)){
+        tokenManager.clearTokens()
+        return syncCalendars(sourceCalendarId, targetCalendarId)
+      }
+      throw err
+    }
   } while(tokenManager.hasPageToken())
   
   return
+
+  /**
+   * Checks error for a 410 status code, which means the sync token is invalid and a full sync is required
+   * @link {see: https://developers.google.com/calendar/api/guides/sync#full_sync_required_by_server}
+   */
+  function syncTokenInvalidError(err){
+    return err?.details.code === 410
+  }
 
   function getTokenManager(){
     const syncTokenSymbol = 'syncToken'
@@ -42,6 +59,10 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
       updateTokens: (pageToken, syncToken) => {
         pageToken ? props.setProperty(pageTokenSymbol, pageToken) : props.deleteProperty(pageTokenSymbol)
         syncToken && props.setProperty(syncTokenSymbol, syncToken)
+      },
+      clearTokens: () => {
+        props.deleteProperty(syncTokenSymbol)
+        props.deleteProperty(pageTokenSymbol)
       }
     }
   }
