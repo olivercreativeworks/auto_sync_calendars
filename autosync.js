@@ -32,14 +32,13 @@ function autoSyncManager(){
     return ScriptApp.getProjectTriggers().find(trigger => trigger.getUniqueId() == triggerId) !== undefined
   }
 
-  /** @param {string} sourceCalendarId */
-  function createAutoSyncTrigger(sourceCalendarId){
-    removeAutoSyncTrigger()
-    const trigger = createTrigger(sourceCalendarId)
+  function createAutoSyncTrigger(){
+    removeExistingTrigger()
+    const trigger = createTrigger()
     saveTriggerId(trigger.getUniqueId())
   }
 
-  function removeAutoSyncTrigger(){
+  function removeExistingTrigger(){
     const triggerId = getAutoSyncTriggerId()
     ScriptApp.getProjectTriggers()
       .filter(trigger => trigger.getUniqueId() === triggerId)
@@ -55,29 +54,30 @@ function autoSyncManager(){
     props.deleteProperty(triggerSymbol)
   }
   
-  /** @param {string} sourceCalendarId */
-  function createTrigger(sourceCalendarId){
-    return !!(scriptUrl) ? createWatcherTrigger() : createDirectTrigger(sourceCalendarId)
+  function createTrigger(){
+    return getScriptUrlManager().hasUrl() ? createWatcherTrigger() : createDirectTrigger()
   }
   
   /**
    * Sets up the auto sync using a watcher and script url.
    */
   function createWatcherTrigger(){
+    // Activate the watcher right away, then set up a trigger to automatically reactivate the watcher.
+    // The watcher's default lifespan is 7 days. We will reset it on day 6 so there's no gaps.
+    activateWatcher()
     return ScriptApp.newTrigger(activateWatcher.name)
       .timeBased()
       .atHour(0)
-      .everyDays(6) // the watcher's default lifespan is 7 days. We will reset it on day 6 so there's no gaps.
+      .everyDays(6) 
       .create()
   }
 
   /**
    * Sets up the auto sync directly, without using a watcher or script url.
-   * @param {string} sourceCalendarId
    */
-  function createDirectTrigger(sourceCalendarId){
-    return ScriptApp.newTrigger(syncCalendarsBasedOnConfig.name)
-      .forUserCalendar(sourceCalendarId)
+  function createDirectTrigger(){
+    return ScriptApp.newTrigger(performCalendarSync.name)
+      .forUserCalendar(getCalendarIdManager().getSourceCalendarId())
       .onEventUpdated()
       .create()
   }
