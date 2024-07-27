@@ -13,7 +13,7 @@
         - NOTE: ScriptApp.getService().getUrl() does not return the correct '/exec' url when called from a time based trigger (the 'YOUR-UNIQUE-ID' part is different). So we need to enter the url ourselves.
 */
 const CONFIG = {
-  sourceCalendarId: '',
-  targetCalendarId: '',
+  sourceCalendarId:'',
+  targetCalendarId:'',
   scriptUrlOptional:'' 
 }
