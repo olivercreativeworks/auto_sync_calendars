@@ -106,19 +106,14 @@ function autoSyncManager(){
 }
 
 /**
- * Creates a watcher that alerts the scriptUrl whenever a change is made to the source calendar. Update the source calendar id and url in the Config.gs file.
+ * Creates a watcher that alerts the scriptUrl whenever a change is made to the source calendar. Update the source calendar id and url saved when you run the activate method of autosync manager.
  * 
- * This is used in a trigger function, so it's placed in the global scope. Default arguments are supplied in the body of the function instead of as parameters. This is because the trigger function won't pick up on default parameters.
- * 
- * @param {string} [sourceCalendarId] Optional. Uses the config value as a default. Throws if neither the parameter nor the config are provided.
- * @param {string} [scriptUrl] Optional Uses the config value as a default. Throws if neither the parameter nor the config are provided. 
+ * This is used in a trigger function, so it's placed in the global scope. 
  */
-function activateWatcher(sourceCalendarId, scriptUrl){
-  const id = sourceCalendarId || CONFIG.sourceCalendarId
-  const url = scriptUrl || CONFIG.scriptUrl
-  getCalendarWatcher().beginWatching(id, url)
+function activateWatcher(){
+   getCalendarWatcher()
+      .beginWatching(getCalendarIdManager().getSourceCalendarId(), getScriptUrlManager().getScriptUrl())
 }
-
 
 /**
  * Manages starting and stopping watchers (i.e. channels)
