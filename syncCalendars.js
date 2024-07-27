@@ -18,13 +18,12 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
 
       tokenManager.updateTokens(sourceEvents.nextPageToken, sourceEvents.nextSyncToken)
     }catch(err){
-      console.warn(err)
-      console.warn(err.details)
       if(syncTokenInvalidError(err)){
         tokenManager.clearTokens()
-        return syncCalendars(sourceCalendarId, targetCalendarId)
+        syncCalendars(sourceCalendarId, targetCalendarId)
+      }else{
+        throw err
       }
-      throw err
     }
   } while(tokenManager.hasPageToken())
   
