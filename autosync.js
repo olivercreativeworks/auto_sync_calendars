@@ -163,10 +163,14 @@ function getCalendarWatcher(){
    * @param {string} url 
    */
   function startWatchingCalendar(calendarId, url){
-    const resource= {
+    // see: https://developers.google.com/calendar/api/v3/reference/events/watch#request-body
+    const resource={
       address: url,
       id: Utilities.getUuid(),
-      type: 'web_hook'
+      type: 'web_hook',
+      params:{
+        ttl: 604800 // time to live in seconds. 604800 seconds is 7 days.
+      }
     }
     saveWatcher(Calendar.Events.watch(resource, calendarId))
     console.log(`Watching calendar with id ${calendarId}.`)
