@@ -66,6 +66,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
     // The event in the calendar should have the same id as the source event
     const existingEvent = getEvent(calendarId, sourceEvent.id)
     if(!existingEvent) {
+      if(isCancelled(sourceEvent)) return
       return createEvent(sourceEvent, calendarId)
     }
     else if(noUpdatesRequired(sourceEvent, existingEvent)){
