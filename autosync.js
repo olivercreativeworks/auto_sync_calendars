@@ -1,16 +1,20 @@
-function autoSyncManager(){
+/**
+ * @param {string} [scriptUrl] The url for this web app. Optional. If provided, the autoSync will use a watcher that triggers a sync through POST requests that are sent whenever the source calendar is updated. See the config file for more details.
+ */
+function autoSyncManager(scriptUrl){
   const triggerSymbol = 'trigger'
   const props = PropertiesService.getScriptProperties()
   return {
-    activate:() => {
+    /** @param {string} sourceCalendarId */
+    activate:(sourceCalendarId) => {
       if(autoSyncIsActive()){
         console.warn('Auto sync is already active.')
         return
       }
-      if(CONFIG.scriptUrl){ 
-        activateWatcher() 
+      if(scriptUrl){ 
+        activateWatcher(sourceCalendarId, scriptUrl) 
       }
-      createAutoSyncTrigger()
+      createAutoSyncTrigger(sourceCalendarId)
       console.log('Auto sync is active.')
     },
     disable: () => {
@@ -29,9 +33,10 @@ function autoSyncManager(){
     return ScriptApp.getProjectTriggers().find(trigger => trigger.getUniqueId() == triggerId) !== undefined
   }
 
-  function createAutoSyncTrigger(){
+  /** @param {string} sourceCalendarId */
+  function createAutoSyncTrigger(sourceCalendarId){
     removeAutoSyncTrigger()
-    const trigger = createTrigger()
+    const trigger = createTrigger(sourceCalendarId)
     saveTriggerId(trigger.getUniqueId())
   }
 
@@ -51,8 +56,9 @@ function autoSyncManager(){
     props.deleteProperty(triggerSymbol)
   }
   
-  function createTrigger(){
-    return !!(CONFIG.scriptUrl) ? createWatcherTrigger() : createDirectTrigger()
+  /** @param {string} sourceCalendarId */
+  function createTrigger(sourceCalendarId){
+    return !!(scriptUrl) ? createWatcherTrigger() : createDirectTrigger(sourceCalendarId)
   }
   
   /**
@@ -68,10 +74,11 @@ function autoSyncManager(){
 
   /**
    * Sets up the auto sync directly, without using a watcher or script url.
+   * @param {string} sourceCalendarId
    */
-  function createDirectTrigger(){
+  function createDirectTrigger(sourceCalendarId){
     return ScriptApp.newTrigger(syncCalendarsBasedOnConfig.name)
-      .forUserCalendar(CONFIG.sourceCalendarId)
+      .forUserCalendar(sourceCalendarId)
       .onEventUpdated()
       .create()
   }
@@ -90,12 +97,17 @@ function autoSyncManager(){
 }
 
 /**
- * Creates a watcher that alerts this script's url whenever a change is made to the source calendar. Update the source calendar id in the Config.gs file.
+ * Creates a watcher that alerts the scriptUrl whenever a change is made to the source calendar. Update the source calendar id and url in the Config.gs file.
  * 
- * This is used in a trigger function, so it's placed in the global scope.
+ * This is used in a trigger function, so it's placed in the global scope. Default arguments are supplied in the body of the function instead of as parameters. This is because the trigger function won't pick up on default parameters.
+ * 
+ * @param {string} [sourceCalendarId] Optional. Uses the config value as a default. Throws if neither the parameter nor the config are provided.
+ * @param {string} [scriptUrl] Optional Uses the config value as a default. Throws if neither the parameter nor the config are provided. 
  */
-function activateWatcher(){
-  getCalendarWatcher().beginWatching(CONFIG.sourceCalendarId, CONFIG.scriptUrl)
+function activateWatcher(sourceCalendarId, scriptUrl){
+  const id = sourceCalendarId || CONFIG.sourceCalendarId
+  const url = scriptUrl || CONFIG.scriptUrl
+  getCalendarWatcher().beginWatching(id, url)
 }
 
 
