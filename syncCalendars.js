@@ -29,14 +29,6 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
   
   return
 
-  /**
-   * Checks error for a 410 status code, which means the sync token is invalid and a full sync is required
-   * @link {see: https://developers.google.com/calendar/api/guides/sync#full_sync_required_by_server}
-   */
-  function syncTokenInvalidError(err){
-    return err?.details.code === 410
-  }
-
   function getTokenManager(){
     const syncTokenSymbol = 'syncToken'
     const pageTokenSymbol = 'pageToken'
@@ -152,6 +144,15 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
   function updateEvent(eventId, calendarId, eventResource){
     console.log(`Updating event with id ${eventId} on calendar with id ${calendarId}.`)
     return Calendar.Events.update(eventResource, calendarId, eventId)
+  }
+
+  /**
+   * Checks error for a 410 status code, which means the sync token is invalid and a full sync is required
+   * @link {see: https://developers.google.com/calendar/api/guides/sync#full_sync_required_by_server}
+   * @param {Partial<{details:{message:string, code:number}}>} err
+   */
+  function syncTokenInvalidError(err){
+    return err?.details?.code === 410
   }
 }
 
