@@ -1,31 +1,30 @@
-/**
- * @param {string} [scriptUrl] The url for this web app. Optional. If provided, the autoSync will use a watcher that triggers a sync through POST requests that are sent whenever the source calendar is updated. See the config file for more details.
- */
-function autoSyncManager(scriptUrl){
+function autoSyncManager(){
   const triggerSymbol = 'trigger'
   const props = PropertiesService.getScriptProperties()
   return {
-    /** @param {string} sourceCalendarId */
-    activate:(sourceCalendarId) => {
-      if(autoSyncIsActive()){
-        console.warn('Auto sync is already active.')
-        return
-      }
-      if(scriptUrl){ 
-        activateWatcher(sourceCalendarId, scriptUrl) 
-      }
-      createAutoSyncTrigger(sourceCalendarId)
-      console.log('Auto sync is active.')
-    },
-    disable: () => {
-      if(!autoSyncIsActive()){
-        console.warn('Auto sync is already disabled')
-        return
-      }
-      disableAutoSync()
-      removeAutoSyncTrigger()
-      console.log('Auto sync is disabled.')
-    },
+    activate:activate, 
+    disable:disable 
+  }
+
+  /** 
+   * @param {string} sourceCalendarId
+   * @param {string} targetCalendarId
+   * @param {string} [scriptUrl] The url for this web app. Optional. If provided, the autoSync will use a watcher that triggers a sync through POST requests that are sent whenever the source calendar is updated.
+   */
+  function activate(sourceCalendarId, targetCalendarId, scriptUrl){
+    if(autoSyncIsActive()){
+      console.warn('Auto sync is already active.')
+      return
+    }
+    updateSyncSettings(sourceCalendarId, targetCalendarId, scriptUrl)
+    createAutoSyncTrigger()
+    console.log('Auto sync is active.')
+  }
+
+  function updateSyncSettings(sourceCalendarId, targetCalendarId, scriptUrl){
+    getCalendarIdManager().setSource(sourceCalendarId)
+    getCalendarIdManager().setTarget(targetCalendarId)
+    getScriptUrlManager().updateUrl(scriptUrl)
   }
 
   function autoSyncIsActive(){
@@ -86,6 +85,16 @@ function autoSyncManager(scriptUrl){
   /** @prop {string} triggerId */
   function saveTriggerId(triggerId){
     props.setProperty(triggerSymbol, triggerId)
+  }
+
+  function disable(){
+    if(!autoSyncIsActive()){
+      console.warn('Auto sync is already disabled')
+      return
+    }
+    disableAutoSync()
+    removeExistingTrigger()
+    console.log('Auto sync is disabled.')
   }
 
   /**
@@ -172,6 +181,28 @@ function getCalendarWatcher(){
   function saveWatcher(watcher){
     console.log(`Saving watcher:\n${watcher}`)
     props.setProperty(watcherSymbol, JSON.stringify(watcher))
+  }
+}
+
+function getCalendarIdManager(){
+  const sourceIdSymbol = 'sourceCalendarId'
+  const targetIdSymbol = 'targetCalendarId'
+  const props = PropertiesService.getScriptProperties()
+  return {
+    getSourceCalendarId: () => props.getProperty(sourceIdSymbol),
+    getTargetCalendarId: () => props.getProperty(targetIdSymbol),
+    setSource: (id) => props.setProperty(sourceIdSymbol, id), 
+    setTarget: (id) => props.setProperty(targetIdSymbol, id),
+  }
+}
+
+function getScriptUrlManager(){
+  const urlSymbol = 'url'
+  const props = PropertiesService.getScriptProperties()
+  return {
+    getScriptUrl:() => props.getProperty(urlSymbol),
+    updateUrl:(url) => url ? props.setProperty(urlSymbol, url) :  props.deleteProperty(urlSymbol),
+    hasUrl: () => !!(props.getProperty(urlSymbol))
   }
 }
 
