@@ -197,7 +197,9 @@ function performCalendarSync(){
 }
 
 function doPost(e){
-  performCalendarSync()
+  const sourceCalendarId = AutoSync.settings.getSourceCalendarId()
+  const targetCalendarId = AutoSync.settings.getTargetCalendarId()
+  syncCalendars(sourceCalendarId, targetCalendarId)
   return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
 }
 
