@@ -137,15 +137,28 @@ const AutoSync = (() => {
       .create()
     saveWatcher({trigger})
   }
-})()
 
-const ScriptUrlManager = (() => {
-  const urlSymbol = 'url'
-  const props = PropertiesService.getScriptProperties()
-  return {
-    getScriptUrl:() => props.getProperty(urlSymbol),
-    updateUrl:(url) => url ? props.setProperty(urlSymbol, url) :  props.deleteProperty(urlSymbol),
-    hasUrl: () => !!(props.getProperty(urlSymbol))
+  /**
+   * Stops the watcher.
+   */
+  function stop(){
+    const {channel, trigger} = getWatcher()
+    if(!channel && !trigger){
+      console.warn('There is no active watcher')
+      return
+    }
+    if(channel){
+      console.log(`Stopping channel:\n${JSON.stringify(channel)}`)
+      Calendar.Channels.stop(channel)
+      props.deleteProperty(channelSymbol)
+      console.log(`Stopped channel`)
+    }
+    if(trigger){
+      console.log(`Removing trigger with id:${trigger.getUniqueId()}`)
+      ScriptApp.deleteTrigger(trigger)
+      props.deleteProperty(triggerIdSymbol)
+      console.log(`Removed trigger`)
+    }
   }
 })()
 
