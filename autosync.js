@@ -78,45 +78,56 @@ const AutoSync = (() => {
   }
 
   /** 
-   * @param {string} calendarId 
-   * @param {string} url 
+   * Creates a watcher that uses a channel and trigger
    */
-  function resetWatcher(calendarId, url){
-    stopWatchingCalendar()
-    startWatchingCalendar(calendarId, url)
-  }
-
-  function stopWatchingCalendar(){
-    const watcher = getWatcher()
-    if(!watcher) return
-    console.log(`Stopping watcher:\n${JSON.stringify(watcher)}`)
-    Calendar.Channels.stop(watcher)
-    props.deleteProperty(watcherSymbol)
-  }
-
-  /** @return {Calendar_v3.Calendar.V3.Schema.Channel} */
-  function getWatcher(){
-    return JSON.parse(props.getProperty(watcherSymbol))
+  function watchViaChannel(calendarId, url, timeToLive){
+    const channel = createChannel(calendarId, url, timeToLive)
+    const trigger = createChannelRefreshTrigger(channel)
+    saveWatcher({trigger, channel})
+    console.log(`Watching calendar with id ${calendarId}.`)
   }
 
   /** 
+   * Creates a channel that sends a POST request to the url each time a change is made to the calendar with the input id.
+   * 
+   * For info on channels: see https://developers.google.com/calendar/api/v3/reference/events/watch and https://developers.google.com/calendar/api/v3/reference/channels
+   * 
    * @param {string} calendarId 
    * @param {string} url 
+   * @param {number} [timeToLive] How long the channel will live in seconds. Default is 604800 seconds, or 7 days.
    */
-  function startWatchingCalendar(calendarId, url){
-    // see: https://developers.google.com/calendar/api/v3/reference/events/watch#request-body
+  function createChannel(calendarId, url, timeToLive){
+    /** 
+     * This is a resource to be used in a Calendar.Events.watch request body see: {@link https://developers.google.com/calendar/api/v3/reference/events/watch#request-body} 
+     */
     const resource={
       address: url,
       id: Utilities.getUuid(),
       type: 'web_hook',
       params:{
-        ttl: 604800 // time to live in seconds. 604800 seconds is 7 days.
+        ttl: timeToLive || 604800
       }
     }
-    saveWatcher(Calendar.Events.watch(resource, calendarId))
-    console.log(`Watching calendar with id ${calendarId}.`)
+    return Calendar.Events.watch(resource, calendarId)
   }
 
+  /** @param {Calendar_v3.Calendar.V3.Schema.Channel} channel */
+  function createChannelRefreshTrigger(channel){
+    return ScriptApp.newTrigger(refreshAutoSync.name)
+      .timeBased()
+      .atHour(0)
+      .everyDays(getLifespanInDays(channel) - 1)
+      .create()
+  }
+
+  /**
+   * @param {Calendar_v3.Calendar.V3.Schema.Channel} channel
+   */
+  function getLifespanInDays(channel){
+    const millisecondsInADay = (1000 * 60 * 60 * 24)
+    const dateDiffInMilliseconds = new Date(Number(channel.expiration)) - new Date()
+    return Math.ceil(dateDiffInMilliseconds/ millisecondsInADay) 
+  }
 
   /**
    * @param {Watcher} watcher
