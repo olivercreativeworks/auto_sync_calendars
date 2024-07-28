@@ -174,12 +174,11 @@ const AutoSync = (() => {
 })()
 
 /**
- * Syncs the calendars based on the ids in the CalendarIdManager. You can populate the CalendarIdManager by running the startAutoSync function in main.
- * 
- * This is used in a trigger function, so it's placed in the global scope.
+ * This is used in a trigger function, so it's placed in the global scope. 
  */
-function performCalendarSync(){
-  syncCalendars(CalendarIdManager.getSourceCalendarId(), CalendarIdManager.getTargetCalendarId())
+function refreshAutoSync(){
+  AutoSync.stop()
+  AutoSync.activate()
 }
 
 /**
