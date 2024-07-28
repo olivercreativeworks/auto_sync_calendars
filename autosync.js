@@ -46,90 +46,21 @@ const AutoSync = (() => {
         console.log('Settings are updated')
       }
     }
-    updateSyncSettings(sourceCalendarId, targetCalendarId, scriptUrl)
-    createAutoSyncTrigger()
-    console.log('Auto sync is active.')
   }
-
-  /** 
-   * @param {string} sourceCalendarId
-   * @param {string} targetCalendarId
-   * @param {string} [scriptUrl]
-   */
-  function updateSyncSettings(sourceCalendarId, targetCalendarId, scriptUrl){
-    CalendarIdManager.setSource(sourceCalendarId)
-    CalendarIdManager.setTarget(targetCalendarId)
-    ScriptUrlManager.updateUrl(scriptUrl)
-  }
-
-  function autoSyncIsActive(){
-    const triggerId = props.getProperty(triggerSymbol)
-    return ScriptApp.getProjectTriggers().find(trigger => trigger.getUniqueId() == triggerId) !== undefined
-  }
-
-  function createAutoSyncTrigger(){
-    removeExistingTrigger()
-    const trigger = createTrigger()
-    saveTriggerId(trigger.getUniqueId())
-  }
-
-  function removeExistingTrigger(){
-    const triggerId = getAutoSyncTriggerId()
-    ScriptApp.getProjectTriggers()
-      .filter(trigger => trigger.getUniqueId() === triggerId)
-      .forEach(trigger => ScriptApp.deleteTrigger(trigger))
-    deleteTriggerId()
-  }
-
-  function getAutoSyncTriggerId(){
-    return props.getProperty(triggerSymbol)
-  }
-
-  function deleteTriggerId(){
-    props.deleteProperty(triggerSymbol)
-  }
-  
-  function createTrigger(){
-    return ScriptUrlManager.hasUrl() ? createWatcherTrigger() : createDirectTrigger()
-  }
-  
   /**
-   * Sets up the auto sync using a watcher and script url.
+   * Starts the watcher.
    */
-  function createWatcherTrigger(){
-    // Activate the watcher right away, then set up a trigger to automatically reactivate the watcher.
-    // The watcher's default lifespan is 7 days. We will reset it on day 6 so there's no gaps.
-    activateWatcher()
-    return ScriptApp.newTrigger(activateWatcher.name)
-      .timeBased()
-      .atHour(0)
-      .everyDays(6) 
-      .create()
-  }
-
-  /**
-   * Sets up the auto sync directly, without using a watcher or script url.
-   */
-  function createDirectTrigger(){
-    return ScriptApp.newTrigger(performCalendarSync.name)
-      .forUserCalendar(CalendarIdManager.getSourceCalendarId())
-      .onEventUpdated()
-      .create()
-  }
-  
-  /** @prop {string} triggerId */
-  function saveTriggerId(triggerId){
-    props.setProperty(triggerSymbol, triggerId)
-  }
-
-  function disableAutoSync(){
-    if(!autoSyncIsActive()){
-      console.warn('Auto sync is already disabled')
+  function activate(){
+    const {channel, trigger} = getWatcher()
+    if(channel || trigger){
+      console.warn('Watcher is already active')
       return
     }
-    disableAutoSync()
-    removeExistingTrigger()
-    console.log('Auto sync is disabled.')
+    if(settings.hasChannelEndpoint()){
+      watchViaChannel(settings.getSourceCalendarId(), settings.getChannelEndpoint())
+    }else{
+      watchViaTrigger(settings.getSourceCalendarId())
+    }
   }
 
   /**
