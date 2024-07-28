@@ -6,7 +6,9 @@
 
 /**
  * Manages automatic calendar sync via a watcher. A watcher is either a channel + a script trigger to refresh the channel, or a script trigger.
- * Start by updating the settings to store the ids of the calendars you want to monitor (use AutoSync.settings.update)
+ * How to use: 
+    1) Use AutoSync.settings.update and input your calendar ids and optional script url.
+    2) Run AutoSync.activate to start automatically syncing the calendars. Whenever a change happens on the source calendar, it will show up on the target calendar.
  */
 const AutoSync = (() => {
   const channelSymbol = 'channel'
