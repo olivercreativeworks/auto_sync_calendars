@@ -182,8 +182,20 @@ function refreshAutoSync(){
 }
 
 /**
- * The url that the watcher sends the POST request to. Upon receiving the POST request, this calls the function that actually performs the calendar sync.
+ * This is used in a trigger function, so it's placed in the global scope.
  */
+function performCalendarSync(){
+  const sourceCalendarId = AutoSync.settings.getSourceCalendarId()
+  const targetCalendarId = AutoSync.settings.getTargetCalendarId()
+  console.log(`Syncing:\nSource: ${sourceCalendarId}\nTarget: ${targetCalendarId}`)
+  try{
+    syncCalendars(AutoSync.settings.getSourceCalendarId(), AutoSync.settings.getTargetCalendarId())
+  }catch(err){
+    console.error(`Error occured while syncing calendars:\nSource calendar: ${sourceCalendarId}\nTarget calendar: ${targetCalendarId}`)
+    throw err
+  }
+}
+
 function doPost(e){
   performCalendarSync()
   return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
