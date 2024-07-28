@@ -1,20 +1,39 @@
 function autoSyncManager(){
   const triggerSymbol = 'trigger'
   const props = PropertiesService.getScriptProperties()
+  const settings = getSettings()
   return {
-    activate:activateAutoSync, 
-    disable:disableAutoSync 
+    settings,
+    activate,
+    stop,
   }
 
-  /** 
-   * @param {string} sourceCalendarId
-   * @param {string} targetCalendarId
-   * @param {string} [scriptUrl] The url for this web app. Optional. If provided, the autoSync will use a watcher that triggers a sync through POST requests that are sent whenever the source calendar is updated.
-   */
-  function activateAutoSync(sourceCalendarId, targetCalendarId, scriptUrl){
-    if(autoSyncIsActive()){
-      console.warn('Auto sync is already active.')
-      return
+  function getSettings(){
+    const urlSymbol = 'url'
+    const sourceIdSymbol = 'sourceCalendarId'
+    const targetIdSymbol = 'targetCalendarId'
+    return {
+      getChannelEndpoint:() => props.getProperty(urlSymbol),
+      getSourceCalendarId:() => props.getProperty(sourceIdSymbol),
+      getTargetCalendarId:() => props.getProperty(targetIdSymbol),
+      hasChannelEndpoint:() => !!(props.getProperty(urlSymbol)),
+      /** 
+       * @param {string} sourceCalendarId
+       * @param {string} targetCalendarId
+       * @param {string} [scriptUrl]
+       */
+      update:(sourceCalendarId, targetCalendarId, scriptUrl) => {
+        if(!sourceCalendarId || !targetCalendarId){
+          throw new Error('Source and target calendar ids are required')
+        }
+        props.setProperties({
+          [sourceIdSymbol]: sourceCalendarId,
+          [targetIdSymbol]: targetCalendarId,
+          [urlSymbol]: scriptUrl
+        })
+        if(!scriptUrl) props.deleteProperty(urlSymbol)
+        console.log('Settings are updated')
+      }
     }
     updateSyncSettings(sourceCalendarId, targetCalendarId, scriptUrl)
     createAutoSyncTrigger()
@@ -188,15 +207,16 @@ const Watcher = (() => {
   }
 })()
 
-const CalendarIdManager = (() => {
-  const sourceIdSymbol = 'sourceCalendarId'
-  const targetIdSymbol = 'targetCalendarId'
-  const props = PropertiesService.getScriptProperties()
-  return {
-    getSourceCalendarId: () => props.getProperty(sourceIdSymbol),
-    getTargetCalendarId: () => props.getProperty(targetIdSymbol),
-    setSource: (id) => props.setProperty(sourceIdSymbol, id), 
-    setTarget: (id) => props.setProperty(targetIdSymbol, id),
+  /**
+   * Creates a watcher that uses a trigger
+   * @param {string} sourceCalendarId
+   */
+  function watchViaTrigger(sourceCalendarId){
+    const trigger = ScriptApp.newTrigger(performCalendarSync.name)
+      .forUserCalendar(sourceCalendarId)
+      .onEventUpdated()
+      .create()
+    saveWatcher({trigger})
   }
 })()
 
