@@ -1,5 +1,5 @@
 /**
- * Updates the target calendar with the from the source calendar.
+ * Updates the target calendar with events the from the source calendar.
  * @param {string} targetCalendarId
  * @param {string} sourceCalendarId
  */
