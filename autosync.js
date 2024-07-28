@@ -2,8 +2,8 @@ function autoSyncManager(){
   const triggerSymbol = 'trigger'
   const props = PropertiesService.getScriptProperties()
   return {
-    activate:activate, 
-    disable:disable 
+    activate:activateAutoSync, 
+    disable:disableAutoSync 
   }
 
   /** 
@@ -11,7 +11,7 @@ function autoSyncManager(){
    * @param {string} targetCalendarId
    * @param {string} [scriptUrl] The url for this web app. Optional. If provided, the autoSync will use a watcher that triggers a sync through POST requests that are sent whenever the source calendar is updated.
    */
-  function activate(sourceCalendarId, targetCalendarId, scriptUrl){
+  function activateAutoSync(sourceCalendarId, targetCalendarId, scriptUrl){
     if(autoSyncIsActive()){
       console.warn('Auto sync is already active.')
       return
@@ -21,10 +21,15 @@ function autoSyncManager(){
     console.log('Auto sync is active.')
   }
 
+  /** 
+   * @param {string} sourceCalendarId
+   * @param {string} targetCalendarId
+   * @param {string} [scriptUrl]
+   */
   function updateSyncSettings(sourceCalendarId, targetCalendarId, scriptUrl){
-    getCalendarIdManager().setSource(sourceCalendarId)
-    getCalendarIdManager().setTarget(targetCalendarId)
-    getScriptUrlManager().updateUrl(scriptUrl)
+    CalendarIdManager.setSource(sourceCalendarId)
+    CalendarIdManager.setTarget(targetCalendarId)
+    ScriptUrlManager.updateUrl(scriptUrl)
   }
 
   function autoSyncIsActive(){
@@ -55,7 +60,7 @@ function autoSyncManager(){
   }
   
   function createTrigger(){
-    return getScriptUrlManager().hasUrl() ? createWatcherTrigger() : createDirectTrigger()
+    return ScriptUrlManager.hasUrl() ? createWatcherTrigger() : createDirectTrigger()
   }
   
   /**
@@ -77,7 +82,7 @@ function autoSyncManager(){
    */
   function createDirectTrigger(){
     return ScriptApp.newTrigger(performCalendarSync.name)
-      .forUserCalendar(getCalendarIdManager().getSourceCalendarId())
+      .forUserCalendar(CalendarIdManager.getSourceCalendarId())
       .onEventUpdated()
       .create()
   }
@@ -87,7 +92,7 @@ function autoSyncManager(){
     props.setProperty(triggerSymbol, triggerId)
   }
 
-  function disable(){
+  function disableAutoSync(){
     if(!autoSyncIsActive()){
       console.warn('Auto sync is already disabled')
       return
@@ -112,7 +117,7 @@ function autoSyncManager(){
  */
 function activateWatcher(){
    getCalendarWatcher()
-      .beginWatching(getCalendarIdManager().getSourceCalendarId(), getScriptUrlManager().getScriptUrl())
+      .beginWatching(CalendarIdManager.getSourceCalendarId(), ScriptUrlManager.getScriptUrl())
 }
 
 /**
@@ -120,7 +125,7 @@ function activateWatcher(){
  * @link {see: https://developers.google.com/calendar/api/v3/reference/events/watch}
  * @link {see: https://developers.google.com/calendar/api/v3/reference/channels}
  */
-function getCalendarWatcher(){
+const Watcher = (() => {
   const watcherSymbol = 'watcher'
   const props = PropertiesService.getScriptProperties()
   return {
@@ -181,9 +186,9 @@ function getCalendarWatcher(){
     console.log(`Saving watcher:\n${watcher}`)
     props.setProperty(watcherSymbol, JSON.stringify(watcher))
   }
-}
+})()
 
-function getCalendarIdManager(){
+const CalendarIdManager = (() => {
   const sourceIdSymbol = 'sourceCalendarId'
   const targetIdSymbol = 'targetCalendarId'
   const props = PropertiesService.getScriptProperties()
@@ -193,9 +198,9 @@ function getCalendarIdManager(){
     setSource: (id) => props.setProperty(sourceIdSymbol, id), 
     setTarget: (id) => props.setProperty(targetIdSymbol, id),
   }
-}
+})()
 
-function getScriptUrlManager(){
+const ScriptUrlManager = (() => {
   const urlSymbol = 'url'
   const props = PropertiesService.getScriptProperties()
   return {
@@ -203,7 +208,7 @@ function getScriptUrlManager(){
     updateUrl:(url) => url ? props.setProperty(urlSymbol, url) :  props.deleteProperty(urlSymbol),
     hasUrl: () => !!(props.getProperty(urlSymbol))
   }
-}
+})()
 
 /**
  * Syncs the calendars based on the ids in the CalendarIdManager. You can populate the CalendarIdManager by running the startAutoSync function in main.
@@ -211,8 +216,7 @@ function getScriptUrlManager(){
  * This is used in a trigger function, so it's placed in the global scope.
  */
 function performCalendarSync(){
-  const calendarIdManager = getCalendarIdManager()
-  syncCalendars(calendarIdManager.getSourceCalendarId(), calendarIdManager.getTargetCalendarId())
+  syncCalendars(CalendarIdManager.getSourceCalendarId(), CalendarIdManager.getTargetCalendarId())
 }
 
 /**
