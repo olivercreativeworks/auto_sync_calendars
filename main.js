@@ -1,13 +1,11 @@
 /**
- * Run this to activate autosync. Update the config file to change the calendars you want to sync.
+ * Update the config file to change the calendars you want to sync.
  */
 function startAutoSync(){
-  autoSyncManager().activate(CONFIG.sourceCalendarId, CONFIG.targetCalendarId, CONFIG.scriptUrlOptional)
+  AutoSync.settings.update(CONFIG.sourceCalendarId, CONFIG.targetCalendarId, CONFIG.scriptUrlOptional)
+  AutoSync.activate()
 }
 
-/**
- * Run this to stop autosync.
- */
-function endAutoSync(){
-  autoSyncManager().disable()
+function stopAutoSync(){
+  AutoSync.stop()
 }
