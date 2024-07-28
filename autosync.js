@@ -1,5 +1,16 @@
-function autoSyncManager(){
-  const triggerSymbol = 'trigger'
+/**
+ * @typedef Watcher
+ * @prop {ScriptApp.Trigger} trigger
+ * @prop {Calendar_v3.Calendar.V3.Schema.Channel} [channel]
+ */
+
+/**
+ * Manages automatic calendar sync via a watcher. A watcher is either a channel + a script trigger to refresh the channel, or a script trigger.
+ * Start by updating the settings to store the ids of the calendars you want to monitor (use AutoSync.settings.update)
+ */
+const AutoSync = (() => {
+  const channelSymbol = 'channel'
+  const triggerIdSymbol = 'trigger'
   const props = PropertiesService.getScriptProperties()
   const settings = getSettings()
   return {
@@ -122,42 +133,17 @@ function autoSyncManager(){
   }
 
   /**
-   * Stops the watcher so this script will no longer be notified when a change is made to the source calendar. 
+   * @return {Partial<Watcher>}
    */
-  function disableAutoSync(){
-    getCalendarWatcher().stopWatching()
-  }
-}
-
-/**
- * Creates a watcher that alerts the scriptUrl whenever a change is made to the source calendar. Update the source calendar id and url saved when you run the activate method of autosync manager.
- * 
- * This is used in a trigger function, so it's placed in the global scope. 
- */
-function activateWatcher(){
-   getCalendarWatcher()
-      .beginWatching(CalendarIdManager.getSourceCalendarId(), ScriptUrlManager.getScriptUrl())
-}
-
-/**
- * Manages starting and stopping watchers (i.e. channels)
- * @link {see: https://developers.google.com/calendar/api/v3/reference/events/watch}
- * @link {see: https://developers.google.com/calendar/api/v3/reference/channels}
- */
-const Watcher = (() => {
-  const watcherSymbol = 'watcher'
-  const props = PropertiesService.getScriptProperties()
-  return {
-    /** 
-     * Starts a watcher that will send a POST request the input url when there are changes to the calendar with the specified calendarId.
-     * @param {string} calendarId
-     * @param {string} url The url where the POST request should be sent.
-     */
-    beginWatching: (calendarId, url) => resetWatcher(calendarId, url),
-    /**
-     * Stops the active watcher.
-     */
-    stopWatching: () => stopWatchingCalendar()
+  function getWatcher(){
+    /** @type {Calendar_v3.Calendar.V3.Schema.Channel} */
+    const channel = JSON.parse(props.getProperty(channelSymbol))
+    const triggerId = props.getProperty(triggerIdSymbol)
+    const trigger = ScriptApp.getProjectTriggers().find(trigger => trigger.getUniqueId() === triggerId)
+    return  {
+      channel:channel,
+      trigger:trigger
+    }
   }
 
   /** 
@@ -200,12 +186,14 @@ const Watcher = (() => {
     console.log(`Watching calendar with id ${calendarId}.`)
   }
 
-  /** @param {Calendar_v3.Calendar.V3.Schema.Channel} watcher */
+
+  /**
+   * @param {Watcher} watcher
+   */
   function saveWatcher(watcher){
-    console.log(`Saving watcher:\n${watcher}`)
-    props.setProperty(watcherSymbol, JSON.stringify(watcher))
+    watcher.channel && props.setProperty(channelSymbol, JSON.stringify(watcher.channel))
+    props.setProperty(triggerIdSymbol, watcher.trigger.getUniqueId())
   }
-})()
 
   /**
    * Creates a watcher that uses a trigger
