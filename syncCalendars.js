@@ -5,6 +5,7 @@
  */
 function syncCalendars(sourceCalendarId, targetCalendarId){
   const tokenManager = getTokenManager()
+  console.log('Beginning sync.')
   do{
     try{
       const sourceEvents = getCalendarEvents(
@@ -19,6 +20,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
       tokenManager.updateTokens(sourceEvents.nextPageToken, sourceEvents.nextSyncToken)
     }catch(err){
       if(syncTokenInvalidError(err)){
+        console.warn(err)
         tokenManager.clearTokens()
         syncCalendars(sourceCalendarId, targetCalendarId)
       }else{
@@ -26,7 +28,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
       }
     }
   } while(tokenManager.hasPageToken())
-  
+  console.log('Sync is complete.')
   return
 
   function getTokenManager(){
@@ -43,6 +45,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
         syncToken && props.setProperty(syncTokenSymbol, syncToken)
       },
       clearTokens: () => {
+        console.log('Clearing sync token and page token.')
         props.deleteProperty(syncTokenSymbol)
         props.deleteProperty(pageTokenSymbol)
       }
