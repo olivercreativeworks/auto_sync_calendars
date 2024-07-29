@@ -22,3 +22,12 @@ function startAutoSync(){
 function stopAutoSync(){
   AutoSync.stop()
 }
+
+/**
+ * In the event that the script does not clear out old watchers, you can use this to reboot.
+ */
+function rebootAutoSync(){
+  AutoSync.deleteWatcherData()
+  AutoSync.settings.update(CONFIG.sourceCalendarId, CONFIG.targetCalendarId, CONFIG.scriptUrlOptional)
+  AutoSync.activate()
+}

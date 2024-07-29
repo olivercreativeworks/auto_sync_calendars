@@ -19,6 +19,7 @@ const AutoSync = (() => {
     settings,
     activate,
     stop,
+    deleteWatcherData
   }
 
   function getSettings(){
@@ -46,6 +47,11 @@ const AutoSync = (() => {
         })
         if(!scriptUrl) props.deleteProperty(urlSymbol)
         console.log('Settings are updated')
+      },
+      clearSettings: () => {
+        props.deleteProperty(urlSymbol)
+        props.deleteProperty(sourceIdSymbol)
+        props.deleteProperty(targetIdSymbol)
       }
     }
   }
@@ -172,6 +178,31 @@ const AutoSync = (() => {
       props.deleteProperty(triggerIdSymbol)
       console.log(`Removed trigger`)
     }
+  }
+
+  /**
+   * Clears all settings and attempts to stop any active watchers and removes saved watcher info. 
+   */
+  function deleteWatcherData(){
+    settings.clearSettings()
+    const {channel, trigger} = getWatcher()
+
+    try{
+      Calendar.Channels.stop(channel)
+    }catch(err){
+      console.warn(err)
+    }finally{
+      props.deleteProperty(channelSymbol)
+    }
+
+    try{
+      ScriptApp.deleteTrigger(trigger)
+    }catch(err){
+      console.warn(err)
+    }finally{
+      props.deleteProperty(triggerIdSymbol)
+    }
+    console.log('Hard stop complete')
   }
 })()
 
