@@ -185,7 +185,7 @@ const AutoSync = (() => {
   /**
    * Clears all settings and attempts to stop any active watchers and removes saved watcher info. 
    */
-  function deleteWatcherData(){
+  function forceStop(){
     settings.clearSettings()
     const {channel, trigger} = getWatcher()
 
