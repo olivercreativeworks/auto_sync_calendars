@@ -1,11 +1,12 @@
 /**
  * Updates the target calendar with events the from the source calendar.
- * @param {string} targetCalendarId
  * @param {string} sourceCalendarId
+ * @param {string} targetCalendarId
+ * @param {(message: string | Error) => void} [log] - A logging function.
  */
-function syncCalendars(sourceCalendarId, targetCalendarId){
+function syncCalendars(sourceCalendarId, targetCalendarId, log = defaultLogger){
   const tokenManager = getTokenManager()
-  console.log('Beginning sync.')
+  log('Beginning sync.')
   do{
     try{
       const sourceEvents = getCalendarEvents(
@@ -19,8 +20,8 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
 
       tokenManager.updateTokens(sourceEvents.nextPageToken, sourceEvents.nextSyncToken)
     }catch(err){
+      log(err)
       if(syncTokenInvalidError(err)){
-        console.warn(err)
         tokenManager.clearTokens()
         syncCalendars(sourceCalendarId, targetCalendarId)
       }else{
@@ -28,7 +29,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
       }
     }
   } while(tokenManager.hasPageToken())
-  console.log('Sync is complete.')
+  log('Sync is complete.')
   return
 
   function getTokenManager(){
@@ -45,7 +46,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
         syncToken && props.setProperty(syncTokenSymbol, syncToken)
       },
       clearTokens: () => {
-        console.log('Clearing sync token and page token.')
+        log('Clearing sync token and page token.')
         props.deleteProperty(syncTokenSymbol)
         props.deleteProperty(pageTokenSymbol)
       }
@@ -112,7 +113,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
    * @param {string} calendarId
    */
   function createEvent(eventResource, calendarId){
-    console.log(`Creating event from: ${JSON.stringify(eventResource)} on calendar with id ${calendarId}`)
+    log(`Creating event from: ${JSON.stringify(eventResource)} on calendar with id ${calendarId}`)
     return Calendar.Events.insert(eventResource, calendarId)
   }
 
@@ -136,7 +137,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
    * @param {string} calendarId
    */
   function removeEvent(eventId, calendarId){
-    console.log(`Deleting event with id: ${eventId} on calendar with id: ${calendarId}`)
+    log(`Deleting event with id: ${eventId} on calendar with id: ${calendarId}`)
     Calendar.Events.remove(calendarId, eventId)
   }
 
@@ -146,7 +147,7 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
    * @param {Calendar_v3.Calendar.V3.Schema.Event} eventResource
    */
   function updateEvent(eventId, calendarId, eventResource){
-    console.log(`Updating event with id ${eventId} on calendar with id ${calendarId}.`)
+    log(`Updating event with id ${eventId} on calendar with id ${calendarId}.`)
     return Calendar.Events.update(eventResource, calendarId, eventId)
   }
 
@@ -160,4 +161,10 @@ function syncCalendars(sourceCalendarId, targetCalendarId){
   }
 }
 
-
+function defaultLogger(message){
+  if(message instanceof Error){
+    console.warn(message)
+  }else{
+    console.log(message)
+  }
+}
