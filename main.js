@@ -1,9 +1,6 @@
 /**
- * Update the config object then run startAutoSync to start automatically syncing calendars. To turn off autosync run stopAutoSync.
- * 
- * Source calendar id: the id of the calendar you want to copy events from. 
- * Target calendar id: the id of the calendar you will copy events to. 
- * Script url: the url of this web app. This is optional. See readme for more info.
+ * Start by updating the config in the function below. Then run the function to save any config updates.
+ * Once you saved your config updates, you can run startAutoSync to start syncing your calendars.
  */
 const CONFIG = {
   sourceCalendarId:'',
@@ -12,13 +9,16 @@ const CONFIG = {
 }
 
 /**
- * Update the config file to change the calendars you want to sync.
+ * Start automatically syncing your calendars.
  */
 function startAutoSync(){
   AutoSync.settings.update(CONFIG.sourceCalendarId, CONFIG.targetCalendarId, CONFIG.scriptUrlOptional)
   AutoSync.activate()
 }
 
+/**
+ * Stops automatically syncing your calendars.
+ */
 function stopAutoSync(){
   AutoSync.stop()
 }
