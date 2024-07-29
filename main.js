@@ -2,17 +2,19 @@
  * Start by updating the config in the function below. Then run the function to save any config updates.
  * Once you saved your config updates, you can run startAutoSync to start syncing your calendars.
  */
-const CONFIG = {
-  sourceCalendarId:'',
-  targetCalendarId:'',
-  scriptUrlOptional:'' 
+function updateConfig(){
+  const CONFIG = {
+    sourceCalendarId:'',
+    targetCalendarId:'',
+    scriptUrlOptional:'' 
+  }
+  AutoSync.settings.update(CONFIG.sourceCalendarId, CONFIG.targetCalendarId, CONFIG.scriptUrlOptional)
 }
 
 /**
  * Start automatically syncing your calendars.
  */
 function startAutoSync(){
-  AutoSync.settings.update(CONFIG.sourceCalendarId, CONFIG.targetCalendarId, CONFIG.scriptUrlOptional)
   AutoSync.activate()
 }
 
