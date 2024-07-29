@@ -17,9 +17,9 @@ const AutoSync = (() => {
   const settings = getSettings()
   return {
     settings,
-    activate,
-    stop,
-    deleteWatcherData
+    activate: () => activate(),
+    stop: () =>  stop(),
+    forceStop: () => forceStop()
   }
 
   function getSettings(){
