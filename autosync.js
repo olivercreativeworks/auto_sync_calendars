@@ -21,7 +21,9 @@ const AutoSync = (() => {
     stop: () =>  stop(),
     forceStop: () => forceStop()
   }
-
+  /**
+   * Returns the config for the script, including saved source calendar id, target calendar id and script url. These settings are used to run the script automatically.
+   */
   function getSettings(){
     const urlSymbol = 'url'
     const sourceIdSymbol = 'sourceCalendarId'
@@ -159,7 +161,7 @@ const AutoSync = (() => {
   }
 
   /**
-   * Stops the watcher.
+   * Stops the watcher. Most errors with this function are the result of the script storing an outdated reference to a channel or trigger that no longer exists. In that case, you can use forceStop to clear that data.
    */
   function stop(){
     const {channel, trigger} = getWatcher()
@@ -183,7 +185,11 @@ const AutoSync = (() => {
   }
 
   /**
-   * Clears all settings and attempts to stop any active watchers and removes saved watcher info. 
+   * Deletes settings, stops active watchers, and removes saved watcher info. 
+   * 
+   * Use this function if the regular stop method doesn't work because the script is storing an outdated refrence to an already deleted channel or trigger.
+   * 
+   * Note: this function will always remove saved references to watcher channels and triggers, ignoring any errors it might encounter while removing that channel or trigger. 
    */
   function forceStop(){
     settings.clearSettings()
