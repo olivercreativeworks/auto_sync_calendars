@@ -196,21 +196,25 @@ const AutoSync = (() => {
     const {channel, trigger} = getWatcher()
 
     try{
+      console.log(`Stopping channel:\n${JSON.stringify(channel)}`)
       Calendar.Channels.stop(channel)
     }catch(err){
       console.warn(err)
     }finally{
+      console.log(`Removing reference to saved channel:\n${JSON.stringify(channel)}`)
       props.deleteProperty(channelSymbol)
     }
 
     try{
+      console.log(`Removing trigger with id:${trigger.getUniqueId()}`)
       ScriptApp.deleteTrigger(trigger)
     }catch(err){
       console.warn(err)
     }finally{
+      console.log(`Removing reference to saved trigger with id:${trigger.getUniqueId()}`)
       props.deleteProperty(triggerIdSymbol)
     }
-    console.log('Hard stop complete')
+    console.log('Force stop complete')
   }
 })()
 
