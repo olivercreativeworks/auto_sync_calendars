@@ -69,6 +69,7 @@ const AutoSync = (() => {
     }else{
       watchViaTrigger(settings.getSourceCalendarId())
     }
+    console.log('Watcher is active.')
   }
 
   /**
@@ -178,6 +179,7 @@ const AutoSync = (() => {
       props.deleteProperty(triggerIdSymbol)
       console.log(`Removed trigger`)
     }
+    console.log('Watcher is stopped.')
   }
 
   /**
