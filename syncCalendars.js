@@ -6,7 +6,7 @@
  */
 function syncCalendars(sourceCalendarId, targetCalendarId, log = defaultLogger){
   const tokenManager = getTokenManager()
-  log('Beginning sync.')
+  log(`Starting sync for calendars with id:\nSource:${sourceCalendarId}\nTarget:${targetCalendarId}`)
   do{
     try{
       const sourceEvents = getCalendarEvents(
