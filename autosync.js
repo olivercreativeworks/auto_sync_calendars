@@ -242,9 +242,14 @@ function performCalendarSync(){
 }
 
 function doPost(e){
-  const sourceCalendarId = AutoSync.settings.getSourceCalendarId()
-  const targetCalendarId = AutoSync.settings.getTargetCalendarId()
-  syncCalendars(sourceCalendarId, targetCalendarId)
+  try{
+    const sourceCalendarId = AutoSync.settings.getSourceCalendarId()
+    const targetCalendarId = AutoSync.settings.getTargetCalendarId()
+    syncCalendars(sourceCalendarId, targetCalendarId, logToSpreadsheet().write)
+  }catch(err){
+    logToSpreadsheet().write(err)
+    throw err
+  }
   return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
 }
 
