@@ -157,8 +157,21 @@ function syncCalendars(sourceCalendarId, targetCalendarId, optionalFilters = {},
    * @param {string} calendarId
    */
   function createEvent(eventResource, calendarId){
-    log(`Creating event from: ${JSON.stringify(eventResource)} on calendar with id ${calendarId}`)
-    return Calendar.Events.insert(eventResource, calendarId)
+    try{
+      log(`Creating event from: ${JSON.stringify(eventResource)} on calendar with id ${calendarId}`)
+      return Calendar.Events.insert(eventResource, calendarId)
+    }catch(err){
+      if(invalidResourceError(err)){
+        log(err)
+        return
+      }else{
+        throw err
+      }
+    }
+  }
+
+  function invalidResourceError(err){
+    return  err.details?.message.match('Invalid resource id value') && err.details?.code === 400
   }
 
   /**
