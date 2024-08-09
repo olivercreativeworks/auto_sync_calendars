@@ -140,6 +140,7 @@ const AutoSync = (() => {
   function createChannelRefreshTrigger(channel){
     logToSpreadsheet(createChannelRefreshTrigger.name).write('Creating a new watcher (with channel and trigger)')
     return ScriptApp.newTrigger(refreshAutoSync.name)
+      .timeBased()
       .atHour(0)
       .everyDays(getLifespanInDays(channel) - 1)
       .create()
