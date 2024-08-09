@@ -6,9 +6,6 @@
 
 /**
  * Manages automatic calendar sync via a watcher. A watcher is either a channel + a script trigger to refresh the channel, or a script trigger.
- * How to use: 
-    1) Use AutoSync.settings.update and input your calendar ids and optional script url.
-    2) Run AutoSync.activate to start automatically syncing the calendars. Whenever a change happens on the source calendar, it will show up on the target calendar.
  */
 const AutoSync = (() => {
   const channelSymbol = 'channel'
@@ -16,11 +13,28 @@ const AutoSync = (() => {
   const props = PropertiesService.getScriptProperties()
   const settings = getSettings()
   return {
-    settings,
-    activate: () => activate(),
-    stop: () =>  stop(),
-    forceStop: () => forceStop()
+    /**
+     * @param {string} sourceCalendarId
+     * @param {string} targetCalendarId
+     * @param {string} [scriptUrlOptional] - If you provide a url, the watcher will be a channel + script trigger to refresh the channel. Otherwise the watcher will be a script trigger.
+     */
+    start: (sourceCalendarId, targetCalendarId, scriptUrlOptional) => {
+      settings.update(sourceCalendarId, targetCalendarId, scriptUrlOptional)
+      stop_()
+      start_()
+    },
+    stop: () => {
+      settings.clearSettings()
+      stop_()
+    },
+    settings: {
+      getChannelEndpoint: () => settings.getChannelEndpoint(),
+      getSourceCalendarId: () => settings.getSourceCalendarId(),
+      getTargetCalendarId: () => settings.getTargetCalendarId(),
+      hasChannelEndpoint: () => settings.hasChannelEndpoint()
+    },
   }
+
   /**
    * Returns the config for the script, including saved source calendar id, target calendar id and script url. These settings are used to run the script automatically.
    */
@@ -60,7 +74,7 @@ const AutoSync = (() => {
   /**
    * Starts the watcher.
    */
-  function activate(){
+  function start_(){
     const {channel, trigger} = getWatcher()
     if(channel || trigger){
       console.warn('Watcher is already active')
@@ -161,9 +175,9 @@ const AutoSync = (() => {
   }
 
   /**
-   * Stops the watcher. Most errors with this function are the result of the script storing an outdated reference to a channel or trigger that no longer exists. In that case, you can use forceStop to clear that data.
+   * Stops the watcher 
    */
-  function stop(){
+  function stop_(){
     const {channel, trigger} = getWatcher()
     if(!channel && !trigger){
       console.warn('There is no active watcher')
@@ -182,39 +196,6 @@ const AutoSync = (() => {
       console.log(`Removed trigger`)
     }
     console.log('Watcher is stopped.')
-  }
-
-  /**
-   * Deletes settings, stops active watchers, and removes saved watcher info. 
-   * 
-   * Use this function if the regular stop method doesn't work because the script is storing an outdated refrence to an already deleted channel or trigger.
-   * 
-   * Note: this function will always remove saved references to watcher channels and triggers, ignoring any errors it might encounter while removing that channel or trigger. 
-   */
-  function forceStop(){
-    settings.clearSettings()
-    const {channel, trigger} = getWatcher()
-
-    try{
-      console.log(`Stopping channel:\n${JSON.stringify(channel)}`)
-      Calendar.Channels.stop(channel)
-    }catch(err){
-      console.warn(err)
-    }finally{
-      console.log(`Removing reference to saved channel:\n${JSON.stringify(channel)}`)
-      props.deleteProperty(channelSymbol)
-    }
-
-    try{
-      console.log(`Removing trigger with id:${trigger.getUniqueId()}`)
-      ScriptApp.deleteTrigger(trigger)
-    }catch(err){
-      console.warn(err)
-    }finally{
-      console.log(`Removing reference to saved trigger with id:${trigger.getUniqueId()}`)
-      props.deleteProperty(triggerIdSymbol)
-    }
-    console.log('Force stop complete')
   }
 })()
 
