@@ -108,19 +108,24 @@ function syncCalendars(sourceCalendarId, targetCalendarId, optionalFilters = {},
   function syncCalendarWithSourceEvent(calendarId, sourceEvent){
     // The event in the calendar should have the same id as the source event
     const existingEvent = getEvent(calendarId, sourceEvent.id)
-    if(!existingEvent) {
-      if(isCancelled(sourceEvent)) return
-      return createEvent(sourceEvent, calendarId)
+    /** @type {Calendar_v3.Calendar.V3.Schema.Event} */
+    const eventResource = {
+      ...sourceEvent, 
+      attendees:undefined, // remove attendees from event so duplicate invites aren't sent.
     }
-    else if(noUpdatesRequired(sourceEvent, existingEvent)){
+    if(!existingEvent) {
+      if(isCancelled(eventResource)) return
+      return createEvent(eventResource, calendarId)
+    }
+    else if(noUpdatesRequired(eventResource, existingEvent)){
       return
     }
-    else if(isCancelled(sourceEvent)){
+    else if(isCancelled(eventResource)){
       return removeEvent(existingEvent.id, calendarId)
     }
     else{
-      // The sequence must match the existing event's sequence to avoid an error
-      return updateEvent(existingEvent.id, calendarId, {...sourceEvent, sequence:existingEvent.sequence})
+      // The sequence should match the existing event's sequence to avoid an error on event updates
+      return updateEvent(existingEvent.id, calendarId, {...eventResource, sequence:existingEvent.sequence})
     }    
   }
 
