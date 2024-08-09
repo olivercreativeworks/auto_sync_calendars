@@ -180,21 +180,27 @@ const AutoSync = (() => {
    */
   function stop_(){
     const {channel, trigger} = getWatcher()
-    if(!channel && !trigger){
-      console.warn('There is no active watcher')
-      return
-    }
     if(channel){
-      console.log(`Stopping channel:\n${JSON.stringify(channel)}`)
-      Calendar.Channels.stop(channel)
-      props.deleteProperty(channelSymbol)
-      console.log(`Stopped channel`)
+      try{
+        console.log(`Stopping channel:\n${JSON.stringify(channel)}`)
+        Calendar.Channels.stop(channel)
+      }catch(err){
+        console.warn(err)
+      }finally{
+        console.log(`Removing reference to saved channel:\n${JSON.stringify(channel)}`)
+        props.deleteProperty(channelSymbol)
+      }
     }
     if(trigger){
-      console.log(`Removing trigger with id:${trigger.getUniqueId()}`)
-      ScriptApp.deleteTrigger(trigger)
-      props.deleteProperty(triggerIdSymbol)
-      console.log(`Removed trigger`)
+      try{
+        console.log(`Removing trigger with id:${trigger.getUniqueId()}`)
+        ScriptApp.deleteTrigger(trigger)
+      }catch(err){
+        console.warn(err)
+      }finally{
+        console.log(`Removing reference to saved trigger with id:${trigger.getUniqueId()}`)
+        props.deleteProperty(triggerIdSymbol)
+      }
     }
     console.log('Watcher is stopped.')
   }
