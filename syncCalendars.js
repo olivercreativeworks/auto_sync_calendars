@@ -221,6 +221,8 @@ function syncCalendars(sourceCalendarId, targetCalendarId, optionalFilters = {},
 function defaultLogger(message){
   if(message instanceof Error){
     console.warn(message)
+    console.log(message.message)
+    console.log(message.details)
   }else{
     console.log(message)
   }
