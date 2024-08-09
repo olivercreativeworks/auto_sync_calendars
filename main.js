@@ -26,10 +26,3 @@ function startAutoSync(){
 function stopAutoSync(){
   AutoSync.stop()
 }
-
-/**
- * This function attempts to forcefully stop auto sync. Use this if you run into an error using stopAutoSync.
- */
-function forcefullyStopAutoSync(){
-  AutoSync.forceStop()
-}
