@@ -138,7 +138,7 @@ const AutoSync = (() => {
 
   /** @param {Calendar_v3.Calendar.V3.Schema.Channel} channel */
   function createChannelRefreshTrigger(channel){
-    logToSpreadsheet(createChannelRefreshTrigger.name).write('Creating a new watcher (with channel and trigger)')
+    console.log('Creating a new watcher (with channel and trigger)')
     return ScriptApp.newTrigger(refreshAutoSync.name)
       .timeBased()
       .atHour(0)
