@@ -21,7 +21,7 @@ function startAutoSync(){
 }
 
 /**
- * Stops automatically syncing your calendars.
+ * Turns off auto sync and stops syncing your calendars.
  */
 function stopAutoSync(){
   AutoSync.stop()
