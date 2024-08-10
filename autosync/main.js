@@ -37,21 +37,3 @@ const AutoSync = (() => {
     console.log('Watcher is stopped.')
   }
 })()
-
-function doPost(e){
-  const logger = getLogger_()
-  try{
-    updateGlobalLog(logger.write) // update the log so syncCalendars uses our logging function to log messages
-    const sourceCalendarId = WatcherManager_.settings.getSourceCalendarId()
-    const targetCalendarId = WatcherManager_.settings.getTargetCalendarId()
-    syncCalendars(sourceCalendarId, targetCalendarId)
-  }catch(err){
-    logger.write(err)
-  }finally{
-    logger.commit()
-  }
-  return ContentService.createTextOutput('Finished').setMimeType(ContentService.MimeType.TEXT)
-}
-
-
-
