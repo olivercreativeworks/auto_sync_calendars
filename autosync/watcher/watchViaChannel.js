@@ -1,10 +1,15 @@
 /** 
  * Creates a watcher that uses a channel and trigger
+ * @param {string} sourceCalendarId
+ * @param {string} triggerFnName The name of the function to run on a trigger
+ * @param {string} url
+ * @param {number} [timeToLive] How long the channel will live in seconds. Default is 604800 seconds, or 7 days
+ * @return {Watcher}
  */
-function watchViaChannel_(calendarId, url, timeToLive){
-  const channel = createChannel(calendarId, url, timeToLive)
-  const trigger = createChannelRefreshTrigger(channel)
-  console.log(`Watching calendar with id ${calendarId}.`)
+function watchViaChannel_(sourceCalendarId, triggerFnName, url, timeToLive){
+  const channel = createChannel(sourceCalendarId, url, timeToLive)
+  const trigger = createChannelRefreshTrigger(channel, triggerFnName)
+  console.log(`Watching calendar with id ${sourceCalendarId}.`)
   return {trigger, channel}
 
   /** 
@@ -31,10 +36,13 @@ function watchViaChannel_(calendarId, url, timeToLive){
     return Calendar.Events.watch(resource, calendarId)
   }
 
-  /** @param {Calendar_v3.Calendar.V3.Schema.Channel} channel */
-  function createChannelRefreshTrigger(channel){
+  /** 
+   * @param {Calendar_v3.Calendar.V3.Schema.Channel} channel
+   * @param {string} triggerFnName The name of the function to run on a trigger
+   */
+  function createChannelRefreshTrigger(channel, triggerFnName){
     console.log('Creating a new watcher (with channel and trigger)')
-    return ScriptApp.newTrigger(refreshChannelWatcher_.name)
+    return ScriptApp.newTrigger(triggerFnName)
       .timeBased()
       .atHour(0)
       .everyDays(getLifespanInDays(channel) - 1)
@@ -49,12 +57,4 @@ function watchViaChannel_(calendarId, url, timeToLive){
     const dateDiffInMilliseconds = new Date(Number(channel.expiration)) - new Date()
     return Math.ceil(dateDiffInMilliseconds/ millisecondsInADay) 
   }
-}
-
-/**
- * This is used in a trigger function, so it's placed in the global scope. 
- */
-function refreshChannelWatcher_(){
-  WatcherManager_.removeWatcher()
-  WatcherManager_.createWatcher()
 }

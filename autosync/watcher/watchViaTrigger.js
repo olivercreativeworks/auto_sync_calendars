@@ -1,10 +1,12 @@
 /**
  * Creates a watcher that uses a trigger
  * @param {string} sourceCalendarId
+ * @param {string} triggerFnName The name of the function to run on a trigger
+ * @return {Watcher}
  */
-function watchViaTrigger_(sourceCalendarId){
+function watchViaTrigger_(sourceCalendarId, triggerFnName){
   console.log('Creating a new watcher (with trigger)')
-  const trigger = ScriptApp.newTrigger(performCalendarSync_.name)
+  const trigger = ScriptApp.newTrigger(triggerFnName)
     .forUserCalendar(sourceCalendarId)
     .onEventUpdated()
     .create()
@@ -12,17 +14,3 @@ function watchViaTrigger_(sourceCalendarId){
   return {trigger}
 }
 
-/**
- * This is used in a trigger function, so it's placed in the global scope.
- */
-function performCalendarSync_(){
-  const sourceCalendarId = WatcherManager_.settings.getSourceCalendarId()
-  const targetCalendarId = WatcherManager_.settings.getTargetCalendarId()
-  console.log(`Syncing:\nSource: ${sourceCalendarId}\nTarget: ${targetCalendarId}`)
-  try{
-    syncCalendars(WatcherManager_.settings.getSourceCalendarId(), WatcherManager_.settings.getTargetCalendarId())
-  }catch(err){
-    console.error(`Error occured while syncing calendars:\nSource calendar: ${sourceCalendarId}\nTarget calendar: ${targetCalendarId}`)
-    throw err
-  }
-}
