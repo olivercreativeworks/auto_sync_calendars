@@ -1,6 +1,5 @@
 /** @type {(message:string|Error) => void} A global logging function */
-let log;
-updateGlobalLog(defaultLogger_)
+var log = log || defaultLogger_
 
 /**
  * Updates the global variable, ```log```
