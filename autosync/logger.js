@@ -13,7 +13,7 @@ function getLogger_() {
     commit: () => SpreadsheetLogger.commitToLog(getLogSheet_(), getLock_() , processMessage_.name)
   }
 }
-
+/** This is function is used in a trigger, so it's in the global scope. */
 function processMessage_(e){
   SpreadsheetLogger.commitPendingMessagesToLog(e, getLogSheet_(), getLock_(), processMessage_.name)
 }
