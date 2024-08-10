@@ -10,14 +10,11 @@ function startAutoSync(){
     scriptUrlOptional:'https://script.google.com/macros/s/AKfycbz2wKNGf1h31oDvgG_g8raNKVhD5BOD7yTeMalq9cYDoKgAlC7LPygBdbVuIGS3LJZJsw/exec' 
   }
   
-  const sourceCalendarId = getCalendarId(CONFIG.sourceCalendarName)
-  const targetCalendarId = getCalendarId(CONFIG.targetCalendarName)
-  AutoSync.start(sourceCalendarId, targetCalendarId, CONFIG.scriptUrlOptional)
+  const sourceCalendarId = CalendarApp.getCalendarsByName(CONFIG.sourceCalendarName)[0].getId() 
+  const targetCalendarId = CalendarApp.getCalendarsByName(CONFIG.targetCalendarName)[0].getId() 
+  const channelEndpoint = CONFIG.scriptUrlOptional
 
-  function getCalendarId(calendarName){
-    const cal = CalendarApp.getCalendarsByName(calendarName)[0]
-    return cal.getId()
-  }
+  AutoSync.start(sourceCalendarId, targetCalendarId, channelEndpoint)
 }
 
 /**
